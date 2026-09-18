@@ -4,10 +4,10 @@
 
 **The next ticket should be the right ticket.**
 
-A Python command-line tool for prioritizing computer lab issues,
+A local full-stack web application and Python command-line tool for prioritizing computer lab issues,
 tracking work, and keeping support requests organized.
 
-Python 3.11+ · SQLite · Priority scheduling · 22 automated tests
+Python 3.11+ · JavaScript · SQLite · Priority scheduling · 32 automated tests
 
 [Quick start](#quick-start) · [Demo](#see-it-work) · [Design](#under-the-hood) · [Tests](#testing) · [Roadmap](#roadmap)
 
@@ -29,11 +29,13 @@ The tool serves high priority issues first and preserves arrival order within
 each priority. SQLite keeps records between runs, while explicit state
 transitions prevent tickets from being resolved before work begins.
 
-> **Status:** Working local prototype and AI-assisted learning project.
+> **Status:** Completed v1 local web application, built with AI assistance.
 > Not deployed at Bellevue College; contains no institutional records.
 
 ## What it does
 
+- Responsive dashboard with ticket totals, search, status filters, and a next-ticket preview.
+- Accessible ticket creation dialog, clear validation, and one-click resolution.
 - Record issues with a title and one of three priorities.
 - Select the next ticket by priority, then arrival order.
 - Track progress from `waiting` to `active` to `resolved`.
@@ -42,6 +44,49 @@ transitions prevent tickets from being resolved before work begins.
 - Report counts for each status and reject invalid input with readable errors.
 
 ## Quick start
+
+Launch the website from the project folder:
+
+```bash
+python3 server.py
+```
+
+Open **http://127.0.0.1:8000**. Press **Control+C** in the terminal to stop.
+The web app and CLI use the same `tickets.sqlite3` file when launched from the same folder.
+Your existing tickets remain intact. No installation, API keys, or build step is needed.
+If port 8000 is occupied, use `python3 server.py --port 8002` and open that port instead.
+Choose a separate database with `python3 server.py --db example.sqlite3`.
+
+### Web application architecture
+
+The browser loads `web/index.html`, `style.css`, and `main.js`. JavaScript sends JSON
+requests to `server.py`, which uses the existing `TicketStore` and `TicketQueue`
+classes in `app.py`. SQLite saves each change; reloading the page reads saved tickets.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/tickets` | List tickets and obtain a request token |
+| `POST /api/tickets` | Create a ticket with title and priority |
+| `POST /api/start-next` | Atomically claim the next waiting ticket |
+| `POST /api/resolve` | Resolve an active ticket by ID |
+
+Mutations require JSON and the `X-Queue-Token` returned by the same-origin read.
+Host and Origin checks, bounded request bodies, parameterized SQL, and a restrictive
+content security policy provide defense in depth. Ticket text is rendered using
+`textContent`, not injected HTML. These safeguards are **not authentication**.
+
+### Scope and design
+
+Version 1 is complete for **local, single-computer use**. The server binds only to
+127.0.0.1. It uses Python's development HTTP server and is not intended for public
+hosting, institutional use, or sensitive data. Authentication, staff roles, pagination,
+and production hosting are outside this release. Do not expose it through a public tunnel.
+
+The interface follows Emil Kowalski's design engineering guidance: restrained button
+feedback, immediate keyboard interactions, visible focus states, reduced-motion support,
+and responsive layouts. It includes loading, empty, validation, and connection-error states.
+
+### CLI and temporary demo
 
 Requires Python 3.11 or newer. No packages, accounts, credentials, or paid services.
 Open a terminal in this folder, then:
@@ -134,7 +179,7 @@ same ticket. A failed operation rolls back; only active tickets can be resolved.
   Aging or a rotating service policy could address this; neither is implemented.
 - Multiple tickets can be active because multiple lab assistants may be working.
   There is no staff assignment or authentication yet.
-- This is a local prototype, not a web service or distributed system. It has no
+- This is a local web application, not a production or distributed system. It has no
   deployment, production users, SLA measurement, or cloud integration.
 - Ticket titles should use fictional examples. Do not put student names,
   passwords, or institutional support records into this project.
@@ -145,8 +190,11 @@ The tests exercise queue ordering, tie handling, invalid input, lifecycle rules,
 SQL-like text input, disk persistence, simultaneous local claims, CLI output,
 and clean error handling. They use isolated temporary or in-memory databases.
 
-Initial local verification: **22 tests passed**, and the demo produced service
-order 2, 4, 3, 1 with all four tickets resolved.
+Version 1 verification: **32 tests passed** (22 core/CLI tests and 10 web/API
+tests). Web tests cover the HTTP lifecycle, invalid payloads, request size limits,
+host/origin/token checks, static assets, and security headers. Browser checks cover
+creation, claiming, resolution, persistence after reload, search, and responsive layout.
+The temporary CLI demo produces service order 2, 4, 3, 1.
 
 The GitHub Actions workflow is configured to run tests and the demo on Python
 3.11 and 3.13 for pushes and pull requests. Check the repository's **Actions**
@@ -160,9 +208,12 @@ Workflow references: [actions/checkout](https://github.com/actions/checkout),
 ```text
 lab-support-queue/
 ├── app.py                      # Model, queue, storage, and CLI
+├── server.py                   # Local HTTP server and JSON API
+├── web/                        # HTML, CSS, and JavaScript interface
 ├── demo.py                     # Reproducible demo with temporary data
 ├── tests/
-│   └── test_app.py              # Unit and integration tests
+│   ├── test_app.py              # Core unit and integration tests
+│   └── test_web.py              # HTTP and request-protection tests
 ├── .github/workflows/
 │   └── tests.yml                # Python test matrix
 ├── .gitignore                  # Excludes databases and generated files
@@ -176,7 +227,7 @@ lab-support-queue/
 - [ ] Compare heap scheduling with an indexed SQL query.
 - [ ] Add staff assignment and document the resulting state rules.
 
-These are planned improvements, not completed features.
+These are optional future improvements, not requirements for the completed v1.
 
 ## AI assistance
 
