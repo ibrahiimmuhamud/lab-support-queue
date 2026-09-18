@@ -22,7 +22,7 @@ function render() {
   for (const status of Object.keys(statusNames)) $(''+status+'-count').textContent = tickets.filter(t => t.status === status).length;
   $('nav-count').textContent = tickets.length;
   const waiting = tickets.filter(t => t.status === 'waiting').sort((a,b) => a.priority-b.priority || a.id-b.id);
-  $('next-title').textContent = waiting[0]?.title || 'All caught up. A little breathing room.';
+  $('next-title').textContent = waiting[0]?.title || 'No waiting tickets';
   $('start-next').disabled = busy || !waiting.length || !token;
   $('new-ticket').disabled = busy || !token;
   $('submit-ticket').disabled = busy;
@@ -48,7 +48,7 @@ function render() {
       const button = element('button', '✓ Resolve', 'resolve');
       button.setAttribute('aria-label', `Resolve ticket ${ticket.id}: ${ticket.title}`);
       button.disabled = busy;
-      button.addEventListener('click', () => mutate('/api/resolve', {id:ticket.id}, `Ticket #${ticket.id} resolved. Nice work.`));
+      button.addEventListener('click', () => mutate('/api/resolve', {id:ticket.id}, `Ticket #${ticket.id} resolved.`));
       action.append(button);
     } else if (ticket.status === 'resolved') action.append(element('span', '✓ Done'));
     row.append(title,priority,status,date,action);
@@ -91,7 +91,7 @@ document.querySelectorAll('[data-filter]').forEach(button => button.addEventList
 $('search').addEventListener('input',render);
 $('new-ticket').addEventListener('click', () => {$('form-error').textContent='';dialog.showModal();$('title').focus();});
 document.querySelectorAll('.close').forEach(button => button.addEventListener('click', () => dialog.close()));
-$('ticket-form').addEventListener('submit', event => {event.preventDefault();mutate('/api/tickets',{title:$('title').value,priority:Number($('priority').value)},'Ticket created. We’ll take it from here.');});
+$('ticket-form').addEventListener('submit', event => {event.preventDefault();mutate('/api/tickets',{title:$('title').value,priority:Number($('priority').value)},'Ticket created.');});
 $('start-next').addEventListener('click', () => mutate('/api/start-next',{},'Next ticket started. Find it under In progress.'));
 $('refresh').addEventListener('click', async () => {try {await load();notice('Queue refreshed.');} catch(error){notice(error.message);}});
 $('new-ticket').disabled = true;

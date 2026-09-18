@@ -48,6 +48,7 @@ def make_server(database, port=8000):
                     return self.reply(503, {'error': 'Database unavailable. Please try again.'})
             files = {'/': ('index.html', 'text/html; charset=utf-8'),
                      '/style.css': ('style.css', 'text/css; charset=utf-8'),
+                     '/apple.css': ('apple.css', 'text/css; charset=utf-8'),
                      '/main.js': ('main.js', 'text/javascript; charset=utf-8')}
             if path not in files:
                 return self.reply(404, {'error': 'Not found'})

@@ -37,7 +37,7 @@ class WebTests(unittest.TestCase):
         return {'Content-Type':'application/json', 'X-Queue-Token':json.loads(body)['token']}
 
     def test_assets_and_security_headers(self):
-        for path in ('/', '/style.css', '/main.js'):
+        for path in ('/', '/style.css', '/apple.css', '/main.js'):
             code, body, headers = self.request('GET', path)
             self.assertEqual(code, 200)
             self.assertTrue(body)
